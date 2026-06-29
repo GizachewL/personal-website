@@ -1,0 +1,236 @@
+// ============ MOBILE MENU TOGGLE ============
+const menuToggle = document.getElementById('menuToggle');
+const navLinks = document.getElementById('navLinks');
+
+menuToggle.addEventListener('click', () => {
+    navLinks.classList.toggle('active');
+    menuToggle.classList.toggle('active');
+});
+
+navLinks.querySelectorAll('a').forEach(link => {
+    link.addEventListener('click', () => {
+        navLinks.classList.remove('active');
+        menuToggle.classList.remove('active');
+    });
+});
+
+// ============ THEME TOGGLE ============
+const themeToggle = document.getElementById('themeToggle');
+const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+
+const savedTheme = localStorage.getItem('theme');
+if (savedTheme) {
+    document.body.classList.toggle('dark-mode', savedTheme === 'dark');
+    updateThemeToggle(savedTheme === 'dark');
+} else if (prefersDark) {
+    document.body.classList.add('dark-mode');
+    updateThemeToggle(true);
+}
+
+themeToggle.addEventListener('click', () => {
+    document.body.classList.toggle('dark-mode');
+    const isDarkMode = document.body.classList.contains('dark-mode');
+    localStorage.setItem('theme', isDarkMode ? 'dark' : 'light');
+    updateThemeToggle(isDarkMode);
+});
+
+function updateThemeToggle(isDark) {
+    themeToggle.textContent = isDark ? '☀️' : '🌙';
+}
+
+// ============ UPLOAD FUNCTIONALITY ============
+const uploadArea = document.getElementById('uploadArea');
+const fileInput = document.getElementById('fileInput');
+const uploadForm = document.querySelector('#uploadForm');
+const uploadMessage = document.getElementById('uploadMessage');
+
+uploadArea.addEventListener('click', () => fileInput.click());
+
+uploadArea.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    uploadArea.style.borderColor = '#059669';
+    uploadArea.style.backgroundColor = '#d1fae5';
+});
+
+uploadArea.addEventListener('dragleave', () => {
+    uploadArea.style.borderColor = '#10b981';
+    uploadArea.style.backgroundColor = 'white';
+});
+
+uploadArea.addEventListener('drop', (e) => {
+    e.preventDefault();
+    uploadArea.style.borderColor = '#10b981';
+    uploadArea.style.backgroundColor = 'white';
+    
+    const files = e.dataTransfer.files;
+    if (files.length > 0) {
+        fileInput.files = files;
+    }
+});
+
+fileInput.addEventListener('change', (e) => {
+    console.log('Files selected:', e.target.files.length);
+});
+
+// ============ UPLOAD FORM SUBMISSION ============
+uploadForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const title = document.getElementById('title').value;
+    const category = document.getElementById('category').value;
+    const level = document.getElementById('level').value;
+    const description = document.getElementById('description').value;
+    const agree = document.getElementById('agree').checked;
+
+    if (!title || !category || !level || !description || !agree || fileInput.files.length === 0) {
+        showUploadMessage('Please fill in all fields and select a file', 'error');
+        return;
+    }
+
+    try {
+        await simulateUpload();
+        showUploadMessage('✓ Resource uploaded successfully! Thank you for sharing knowledge.', 'success');
+        uploadForm.reset();
+        fileInput.value = '';
+    } catch (error) {
+        showUploadMessage('Error uploading resource. Please try again.', 'error');
+    }
+});
+
+function showUploadMessage(message, type) {
+    uploadMessage.textContent = message;
+    uploadMessage.className = `form-message ${type}`;
+    
+    setTimeout(() => {
+        uploadMessage.className = 'form-message';
+    }, 5000);
+}
+
+async function simulateUpload() {
+    return new Promise(resolve => setTimeout(resolve, 1000));
+}
+
+// ============ CONTACT FORM ============
+const contactForm = document.getElementById('contactForm');
+const formMessage = document.getElementById('formMessage');
+
+contactForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const inputs = contactForm.querySelectorAll('input, textarea');
+    const name = inputs[0].value;
+    const email = inputs[1].value;
+    const message = inputs[2].value;
+
+    if (!name || !email || !message) {
+        showContactMessage('Please fill in all fields', 'error');
+        return;
+    }
+
+    if (!isValidEmail(email)) {
+        showContactMessage('Please enter a valid email', 'error');
+        return;
+    }
+
+    try {
+        await submitContactForm({ name, email, message });
+        showContactMessage('✓ Message sent successfully! We\'ll get back to you soon.', 'success');
+        contactForm.reset();
+    } catch (error) {
+        showContactMessage('Error sending message. Please try again.', 'error');
+    }
+});
+
+function isValidEmail(email) {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
+function showContactMessage(message, type) {
+    formMessage.textContent = message;
+    formMessage.className = `form-message ${type}`;
+    
+    setTimeout(() => {
+        formMessage.className = 'form-message';
+    }, 5000);
+}
+
+async function submitContactForm(data) {
+    return new Promise(resolve => setTimeout(resolve, 500));
+}
+
+// ============ SCROLL ANIMATIONS ============
+const observerOptions = {
+    threshold: 0.1,
+    rootMargin: '0px 0px -100px 0px'
+};
+
+const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+        if (entry.isIntersecting) {
+            entry.target.style.animation = 'fadeInUp 0.8s ease-out forwards';
+            observer.unobserve(entry.target);
+        }
+    });
+}, observerOptions);
+
+document.querySelectorAll('.feature-card, .resource-card, .file-type, .step, .stat-card').forEach(el => {
+    el.style.opacity = '0';
+    observer.observe(el);
+});
+
+// ============ SMOOTH SCROLL OFFSET ============
+document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+    anchor.addEventListener('click', function (e) {
+        const href = this.getAttribute('href');
+        if (href !== '#') {
+            e.preventDefault();
+            const target = document.querySelector(href);
+            if (target) {
+                const offsetTop = target.offsetTop - 80;
+                window.scrollTo({
+                    top: offsetTop,
+                    behavior: 'smooth'
+                });
+            }
+        }
+    });
+});
+
+// ============ ACTIVE NAVBAR LINK ============
+window.addEventListener('scroll', () => {
+    let current = '';
+    const sections = document.querySelectorAll('section');
+    
+    sections.forEach(section => {
+        const sectionTop = section.offsetTop;
+        if (pageYOffset >= sectionTop - 200) {
+            current = section.getAttribute('id');
+        }
+    });
+
+    document.querySelectorAll('.nav-links a').forEach(link => {
+        link.classList.remove('active');
+        if (link.getAttribute('href').slice(1) === current) {
+            link.classList.add('active');
+        }
+    });
+});
+
+// ============ KEYBOARD SHORTCUTS ============
+document.addEventListener('keydown', (e) => {
+    if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+        e.preventDefault();
+        document.querySelector('#resources').scrollIntoView({ behavior: 'smooth' });
+    }
+    
+    if (e.key === 'Escape') {
+        navLinks.classList.remove('active');
+        menuToggle.classList.remove('active');
+    }
+});
+
+// ============ INITIALIZATION ============
+document.addEventListener('DOMContentLoaded', () => {
+    console.log('EduHub Platform loaded successfully!');
+    console.log('Ready to help all generations learn together.');
+});
